@@ -261,7 +261,6 @@ function handleClearHigidos() {
  * Manipula o envio do formulário.
  */
 async function handleFormSubmit(event) {
-    // (Esta função não foi alterada)
     event.preventDefault(); 
     const form = event.target;
     const submitButton = document.getElementById('submit-button');
@@ -277,15 +276,22 @@ async function handleFormSubmit(event) {
     try {
         const formData = new FormData(form);
         const data = {};
+        
+        // Dados simples
         data.examinador = formData.get('examinador');
         data.anotador = formData.get('anotador');
         data.paciente = formData.get('paciente');
         data.dataNascimento = formData.get('data-nascimento');
         data.idade = document.getElementById('idade-calculada').textContent;
+
+        // --- DADOS REVERTIDOS ---
+        // Pega os dados dos dentes e converte direto para texto
         data.dentesPresentes = getCheckedValues('secao-possui').join(', ');
         data.dentesHigidos = getCheckedValues('secao-higidos').join(', ');
         data.dentesCariados = getCheckedValues('secao-cariados').join(', ');
+        // --- FIM DA REVERSÃO ---
         
+        // Envia os dados para o Google Apps Script
         const response = await fetch(GOOGLE_SCRIPT_URL, {
             method: 'POST',
             mode: 'no-cors',
