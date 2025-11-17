@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prontuário Odontopediátrico</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="container">
+        <h1>Prontuário Odontopediátrico 🦷</h1>
+        <p>Formulário para coleta de dados de pacientes.</p>
+
+        <form id="prontuario-form">
+            
+            <fieldset>
+                <legend>Identificação da Equipe</legend>
+                <div class="form-group">
+                    <label for="examinador">Nome do Examinador:</label>
+                    <input type="text" id="examinador" name="examinador" required>
+                </div>
+                <div class="form-group">
+                    <label for="anotador">Nome do Anotador:</label>
+                    <input type="text" id="anotador" name="anotador" required>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>Dados do Paciente</legend>
+                <div class="form-group">
+                    <label for="paciente">Nome do Paciente:</label>
+                    <input type="text" id="paciente" name="paciente" required>
+                </div>
+                <div class="form-group">
+                    <label for="data-nascimento">Data de Nascimento:</label>
+                    <input type="date" id="data-nascimento" name="data-nascimento" required>
+                </div>
+                <div class="form-group">
+                    <label>Idade do Paciente:</label>
+                    <span id="idade-calculada">Preencha a data de nascimento</span>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>Odontograma</legend>
+                
+                <h3>Quais dentes o paciente possui?</h3>
+                <div class="odontograma-container" id="secao-possui">
+                    
+                    <div class="section-header">
+                        <h4>Dentes Decíduos</h4>
+                        <div class="button-group">
+                            <button type="button" id="fill-deciduos" class="action-button fill-all-button">Marcar Todos</button>
+                            <button type="button" id="clear-deciduos" class="action-button clear-all-button">Desmarcar Todos</button>
+                        </div>
+                    </div>
+                    <div class="dente-grid deciduo-grid" id="deciduos-r1"></div>
+                    <div class="dente-grid deciduo-grid" id="deciduos-r2"></div>
+                    <div class="dente-grid deciduo-grid" id="deciduos-r3"></div>
+                    <div class="dente-grid deciduo-grid" id="deciduos-r4"></div>
+
+                    <div class="section-header">
+                        <h4>Dentes Permanentes</h4>
+                        <div class="button-group">
+                            <button type="button" id="fill-permanentes" class="action-button fill-all-button">Marcar Todos</button>
+                            <button type="button" id="clear-permanentes" class="action-button clear-all-button">Desmarcar Todos</button>
+                        </div>
+                    </div>
+                    <div class="dente-grid permanente-grid" id="permanentes-r1"></div>
+                    <div class="dente-grid permanente-grid" id="permanentes-r2"></div>
+                    <div class="dente-grid permanente-grid" id="permanentes-r3"></div>
+                    <div class="dente-grid permanente-grid" id="permanentes-r4"></div>
+                </div>
+
+                <h3>Quais dentes estão hígidos?</h3>
+                <div class="section-header">
+                    <span>Selecione os dentes hígidos abaixo:</span>
+                    <div class="button-group">
+                        <button type="button" id="fill-higidos" class="action-button fill-all-button">Marcar Todos</button>
+                        <button type="button" id="clear-higidos" class="action-button clear-all-button">Desmarcar Todos</button>
+                    </div>
+                </div>
+                <div class="odontograma-container" id="secao-higidos">
+                    <p>Selecione os dentes presentes primeiro.</p>
+                </div>
+
+                <h3>Quais dentes estão cariados?</h3>
+                <div class="odontograma-container" id="secao-cariados">
+                    <p>Selecione os dentes presentes e os hígidos primeiro.</p>
+                </div>
+
+            </fieldset>
+            
+            <button type="submit" id="submit-button">Salvar Prontuário</button>
+            <div id="loading-message" style="display: none;">Enviando dados...</div>
+            <div id="success-message" style="display: none;">Dados salvos com sucesso!</div>
+            <div id="error-message" style="display: none;">Ocorreu um erro. Tente novamente.</div>
+
+        </form>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
