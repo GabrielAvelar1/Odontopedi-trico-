@@ -92,24 +92,77 @@ function criarCheckboxDente(numeroDente, grupo) {
     return div;
 }
 
+
+/**
+ * NOVO: Adiciona a máscara DD/MM/AAAA ao campo de data.
+ */
+function formatarData(input) {
+    let valor = input.value.replace(/\D/g, ''); // Remove tudo que não é número
+    
+    // Adiciona a primeira barra
+    if (valor.length > 2) {
+        valor = valor.substring(0, 2) + '/' + valor.substring(2);
+    }
+    // Adiciona a segunda barra
+    if (valor.length > 5) {
+        valor = valor.substring(0, 5) + '/' + valor.substring(5, 9);
+    }
+    
+    input.value = valor;
+}
+
 /**
  * Calcula a idade do paciente com base na data de nascimento.
  */
+/**
+ * Calcula a idade do paciente com base na data de nascimento (formato DD/MM/AAAA).
+ */
 function calcularIdade() {
-    // (Esta função não foi alterada)
     const dataNascimento = document.getElementById('data-nascimento').value;
-    if (!dataNascimento) {
-        document.getElementById('idade-calculada').textContent = 'Preencha a data de nascimento';
+    const spanIdade = document.getElementById('idade-calculada');
+
+    // Verifica se a data está no formato completo DD/MM/AAAA
+    if (!dataNascimento || dataNascimento.length < 10) {
+        spanIdade.textContent = 'Preencha a data (DD/MM/AAAA)';
         return;
     }
+
+    // Converte a data DD/MM/AAAA para um formato que o JS entende
+    const partes = dataNascimento.split('/');
+    if (partes.length !== 3) {
+        spanIdade.textContent = 'Formato inválido';
+        return;
+    }
+
+    const dia = parseInt(partes[0], 10);
+    const mes = parseInt(partes[1], 10);
+    const ano = parseInt(partes[2], 10);
+
+    // Validação básica da data
+    if (isNaN(dia) || isNaN(mes) || isNaN(ano) || ano < 1900 || mes < 1 || mes > 12 || dia < 1 || dia > 31) {
+         spanIdade.textContent = 'Data inválida';
+         return;
+    }
+
+    // O construtor Date() do JS usa o formato (YYYY, Mês-1, Dia)
+    const nasc = new Date(ano, mes - 1, dia);
+    
+    // Checagem extra para datas impossíveis (ex: 31/02)
+    // Se o JS "corrigir" a data, é porque ela estava inválida
+    if (nasc.getDate() !== dia || nasc.getMonth() + 1 !== mes || nasc.getFullYear() !== ano) {
+         spanIdade.textContent = 'Data inválida';
+         return;
+    }
+    
     const hoje = new Date();
-    const nasc = new Date(dataNascimento);
     let idade = hoje.getFullYear() - nasc.getFullYear();
-    const mes = hoje.getMonth() - nasc.getMonth();
-    if (mes < 0 || (mes === 0 && hoje.getDate() < nasc.getDate())) {
+    const m = hoje.getMonth() - nasc.getMonth();
+
+    if (m < 0 || (m === 0 && hoje.getDate() < nasc.getDate())) {
         idade--;
     }
-    document.getElementById('idade-calculada').textContent = `${idade} anos`;
+    
+    spanIdade.textContent = `${idade} anos`;
 }
 
 // --- LÓGICA DE ATUALIZAÇÃO REVISADA ---
