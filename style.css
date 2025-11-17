@@ -220,6 +220,35 @@ button[type="submit"]:hover {
     padding: 12px;
     border-radius: 6px;
 }
+
+/* --- NOVO ESTILO PARA O BOTÃO DA PLANILHA --- */
+.sheet-button {
+    display: block; /* Faz o link ocupar a linha */
+    width: 100%;
+    box-sizing: border-box; /* Garante que o padding não quebre o layout */
+    padding: 12px;
+    margin-bottom: 25px; /* Espaçamento antes do formulário */
+    
+    /* Estilo do botão "outline" */
+    background-color: #f8f9fa;
+    border: 1px solid #007bff; /* Borda com o azul principal */
+    color: #007bff; /* Texto com o azul principal */
+    
+    border-radius: 6px;
+    font-size: 1em;
+    font-weight: 600;
+    text-align: center;
+    text-decoration: none; /* Remove o sublinhado do link */
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.sheet-button:hover {
+    background-color: #007bff; /* Fundo muda ao passar o mouse */
+    color: #ffffff; /* Texto muda para branco */
+}
+
+
 #loading-message { color: #005a8d; }
 #success-message { background-color: #d4edda; color: #155724; }
 #error-message { background-color: #f8d7da; color: #721c24; }
