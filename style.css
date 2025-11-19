@@ -248,6 +248,48 @@ button[type="submit"]:hover {
     color: #ffffff; /* Texto muda para branco */
 }
 
+/* ... (MANTENHA TODO O CSS ANTERIOR) ... */
+
+/* --- NOVO: Estilos para a seleção de Faces de Cárie --- */
+.face-card {
+    background-color: #fff;
+    border: 1px solid #e0c46c; /* Borda amarelada */
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+}
+
+.face-card-title {
+    font-weight: bold;
+    color: #856404;
+    margin-bottom: 8px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+}
+
+.faces-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.face-option {
+    display: flex;
+    align-items: center;
+    font-size: 0.9em;
+}
+
+.face-option input {
+    margin-right: 5px;
+}
+
+/* Estilo para Textarea */
+textarea {
+    resize: vertical; /* Permite redimensionar apenas verticalmente */
+    font-family: inherit;
+}
 
 #loading-message { color: #005a8d; }
 #success-message { background-color: #d4edda; color: #155724; }
