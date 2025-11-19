@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Relatório Completo de Pacientes</title>
+    <title>Relatório de Pacientes</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* Estilos gerais do container */
+        /* Estilos gerais */
         .container {
             max-width: 95%;
             margin: 20px auto;
         }
 
-        /* --- NOVO: Estilos para a Barra de Filtros --- */
+        /* Filtros */
         .filter-container {
             display: flex;
             gap: 15px;
@@ -20,7 +20,7 @@
             background-color: #f1f1f1;
             padding: 15px;
             border-radius: 8px;
-            flex-wrap: wrap; /* Quebra linha em telas pequenas */
+            flex-wrap: wrap;
             align-items: flex-end;
         }
 
@@ -45,27 +45,26 @@
             font-size: 1em;
         }
 
-        /* Estilos da Tabela (Mantidos) */
+        /* Tabela */
         .table-container {
-            overflow-x: auto;
             margin-top: 10px;
             background: white;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            overflow-x: auto;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 0.85em;
-            min-width: 1200px;
+            font-size: 0.9em;
+            min-width: 600px; /* Largura mínima menor, já que escondemos colunas */
         }
 
         th, td {
-            padding: 12px 10px;
+            padding: 15px;
             border-bottom: 1px solid #eee;
             text-align: left;
-            vertical-align: top;
         }
 
         th {
@@ -73,22 +72,78 @@
             color: white;
             font-weight: 600;
             white-space: nowrap;
-            position: sticky;
-            top: 0;
         }
 
-        tr:hover { background-color: #f8f9fa; }
-
-        .col-lista {
-            max-width: 150px;
-            word-wrap: break-word;
-            font-family: monospace;
-            color: #555;
+        /* --- ESTILOS DA LINHA RESUMO (Clicável) --- */
+        .linha-resumo {
+            cursor: pointer;
+            transition: background-color 0.2s;
         }
 
-        .tag-verde { color: #155724; background-color: #d4edda; padding: 2px 5px; border-radius: 4px; font-weight: bold; }
-        .tag-vermelha { color: #721c24; background-color: #f8d7da; padding: 2px 5px; border-radius: 4px; font-weight: bold; }
-        .tag-azul { color: #004085; background-color: #cce5ff; padding: 2px 5px; border-radius: 4px; font-weight: bold; }
+        .linha-resumo:hover {
+            background-color: #e9ecef;
+        }
+
+        /* Ícone para indicar que pode abrir */
+        .icon-expand::after {
+            content: ' ▼';
+            font-size: 0.8em;
+            color: #888;
+        }
+
+        /* --- ESTILOS DA LINHA DE DETALHES (Oculta) --- */
+        .linha-detalhe {
+            display: none; /* Começa escondida */
+            background-color: #f8f9fa;
+        }
+
+        .linha-detalhe.aberta {
+            display: table-row; /* Aparece quando tem a classe 'aberta' */
+        }
+
+        /* Layout interno dos detalhes (Grid) */
+        .detalhes-content {
+            padding: 20px;
+            border-left: 5px solid #005a8d; /* Identidade visual */
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-box {
+            background: white;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+
+        .stat-titulo { font-size: 0.85em; color: #666; display: block; margin-bottom: 5px; }
+        .stat-valor { font-size: 1.2em; font-weight: bold; }
+
+        .listas-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+
+        .lista-item {
+            background: white;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #eee;
+        }
+        .lista-label { font-weight: bold; margin-right: 5px; }
+        .lista-dados { font-family: monospace; color: #555; }
+
+        /* Cores das estatísticas */
+        .cor-azul { color: #004085; }
+        .cor-verde { color: #155724; }
+        .cor-vermelha { color: #721c24; }
 
         .btn-voltar {
             display: inline-block;
@@ -98,18 +153,11 @@
             color: white;
             text-decoration: none;
             border-radius: 5px;
-            font-weight: 500;
         }
         .btn-voltar:hover { background-color: #5a6268; }
 
-        .loading { text-align: center; padding: 40px; color: #666; font-size: 1.2em; }
-        
-        /* Contador de resultados */
-        #contador-resultados {
-            font-style: italic;
-            color: #666;
-            margin-left: 10px;
-        }
+        .loading { text-align: center; padding: 40px; color: #666; }
+        #contador-resultados { font-style: italic; color: #666; margin-left: 10px; }
     </style>
 </head>
 <body>
@@ -117,26 +165,24 @@
     <div class="container">
         <a href="index.html" class="btn-voltar">← Voltar ao Formulário</a>
         
-        <h1>Relatório Completo de Pacientes 📋</h1>
+        <h1>Relatório de Pacientes 📋</h1>
         
         <div class="filter-container">
             <div class="filter-group">
                 <label for="filtro-examinador">Filtrar por Examinador:</label>
                 <input type="text" id="filtro-examinador" placeholder="Digite o nome...">
             </div>
-            
             <div class="filter-group">
                 <label for="filtro-anotador">Filtrar por Anotador:</label>
                 <input type="text" id="filtro-anotador" placeholder="Digite o nome...">
             </div>
-
             <div class="filter-group">
-                <label for="filtro-cariados">Mínimo de Dentes Cariados:</label>
-                <input type="number" id="filtro-cariados" placeholder="Ex: 1 (Mostra 1 ou mais)">
+                <label for="filtro-cariados">Mínimo de Cariados:</label>
+                <input type="number" id="filtro-cariados" placeholder="Ex: 1">
             </div>
         </div>
         
-        <p>Mostrando <span id="contador-registros">0</span> registro(s).</p>
+        <p>Mostrando <span id="contador-registros">0</span> registro(s). <small>(Toque em um paciente para ver detalhes)</small></p>
 
         <div id="loading" class="loading">Carregando dados da planilha...</div>
 
@@ -144,19 +190,11 @@
             <table id="tabela-pacientes" style="display: none;">
                 <thead>
                     <tr>
-                        <th>Data/Hora</th>
+                        <th>Data</th>
                         <th>Paciente</th>
                         <th>Nascimento</th>
                         <th>Idade</th>
                         <th>Equipe</th>
-                        
-                        <th title="Total de Dentes Presentes">Qtd. Total</th>
-                        <th title="Total de Hígidos">Qtd. Hígidos</th>
-                        <th title="Total de Cariados">Qtd. Cariados</th>
-
-                        <th>Lista: Presentes</th>
-                        <th>Lista: Hígidos</th>
-                        <th>Lista: Cariados</th>
                     </tr>
                 </thead>
                 <tbody id="tabela-corpo">
@@ -169,14 +207,12 @@
         // --- ATENÇÃO: COLE SUA URL DO SCRIPT AQUI ---
         const API_URL = 'https://script.google.com/macros/s/AKfycbwrZcgJcZoWyuINJ-LP2V_kxLuC6h_WTWZAO2YdyHMfui46oE-lrWt1e_xbHB87g5hgBQ/exec';
 
-        // Variável global para guardar os dados originais
         let todosOsDados = [];
 
         document.addEventListener('DOMContentLoaded', async () => {
             const loading = document.getElementById('loading');
             const tabela = document.getElementById('tabela-pacientes');
             
-            // Elementos dos filtros
             const inputExaminador = document.getElementById('filtro-examinador');
             const inputAnotador = document.getElementById('filtro-anotador');
             const inputCariados = document.getElementById('filtro-cariados');
@@ -190,17 +226,13 @@
                     return;
                 }
 
-                // Salva os dados na variável global e inverte a ordem (mais recentes primeiro)
                 todosOsDados = dados.reverse();
 
                 loading.style.display = 'none';
                 tabela.style.display = 'table';
 
-                // Renderiza a tabela pela primeira vez com tudo
                 renderizarTabela(todosOsDados);
 
-                // --- Adiciona os eventos de "escuta" nos filtros ---
-                // A cada letra digitada, chama a função filtrarDados
                 inputExaminador.addEventListener('input', filtrarDados);
                 inputAnotador.addEventListener('input', filtrarDados);
                 inputCariados.addEventListener('input', filtrarDados);
@@ -211,82 +243,126 @@
             }
         });
 
-        /**
-         * Função que filtra os dados com base nos inputs e redesenha a tabela
-         */
         function filtrarDados() {
             const termoExaminador = document.getElementById('filtro-examinador').value.toLowerCase();
             const termoAnotador = document.getElementById('filtro-anotador').value.toLowerCase();
             const qtdCariados = document.getElementById('filtro-cariados').value;
 
-            // Filtra o array original
             const dadosFiltrados = todosOsDados.filter(paciente => {
-                // Verifica Examinador (se contém o texto digitado)
-                // O "|| ''" previne erro se o campo estiver vazio na planilha
                 const matchExaminador = (paciente.Examinador || '').toLowerCase().includes(termoExaminador);
-                
-                // Verifica Anotador
                 const matchAnotador = (paciente.Anotador || '').toLowerCase().includes(termoAnotador);
-                
-                // Verifica Quantidade de Cariados (Lógica: Maior ou Igual)
-                // Se o filtro estiver vazio, considera verdadeiro (true)
                 let matchCariados = true;
                 if (qtdCariados !== '') {
                     const numCariadosPaciente = parseInt(paciente['Nr Cariados']) || 0;
                     matchCariados = numCariadosPaciente >= parseInt(qtdCariados);
                 }
-
                 return matchExaminador && matchAnotador && matchCariados;
             });
 
-            // Redesenha a tabela com os dados filtrados
             renderizarTabela(dadosFiltrados);
         }
 
-        /**
-         * Função responsável apenas por desenhar as linhas da tabela
-         */
         function renderizarTabela(listaDeDados) {
             const tbody = document.getElementById('tabela-corpo');
             const contador = document.getElementById('contador-registros');
             
-            tbody.innerHTML = ''; // Limpa a tabela atual
-            contador.textContent = listaDeDados.length; // Atualiza o contador
+            tbody.innerHTML = '';
+            contador.textContent = listaDeDados.length;
 
             if (listaDeDados.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; padding: 20px;">Nenhum resultado encontrado para os filtros.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px;">Nenhum resultado encontrado.</td></tr>';
                 return;
             }
 
-            listaDeDados.forEach(linha => {
-                // Formatações
-                let dataHora = new Date(linha.Timestamp).toLocaleString('pt-BR');
+            listaDeDados.forEach((linha, index) => {
+                // Formatação de Data
+                let dataHora = new Date(linha.Timestamp).toLocaleDateString('pt-BR');
                 let dataNasc = linha.Data_Nascimento;
                 if (linha.Data_Nascimento && linha.Data_Nascimento.includes('T')) {
                         dataNasc = new Date(linha.Data_Nascimento).toLocaleDateString('pt-BR');
                 }
 
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
+                // Cria um ID único para vincular a linha resumo à linha detalhe
+                const detalheId = `detalhe-${index}`;
+
+                // --- LINHA 1: RESUMO (Clicável) ---
+                const trResumo = document.createElement('tr');
+                trResumo.className = 'linha-resumo';
+                trResumo.onclick = () => toggleDetalhe(detalheId); // Função que abre/fecha
+                
+                trResumo.innerHTML = `
                     <td>${dataHora}</td>
-                    <td><strong>${linha.Paciente || '---'}</strong></td>
+                    <td class="icon-expand"><strong>${linha.Paciente || '---'}</strong></td>
                     <td>${dataNasc || '---'}</td>
                     <td>${linha.Idade || '---'}</td>
                     <td>
                         <strong>Ex:</strong> ${linha.Examinador || '-'}<br>
                         <small><strong>An:</strong> ${linha.Anotador || '-'}</small>
                     </td>
-                    
-                    <td style="text-align: center;"><span class="tag-azul">${linha['Nr Dentes'] || 0}</span></td>
-                    <td style="text-align: center;"><span class="tag-verde">${linha['Nr Higidos'] || 0}</span></td>
-                    <td style="text-align: center;"><span class="tag-vermelha">${linha['Nr Cariados'] || 0}</span></td>
-                    
-                    <td class="col-lista">${linha.Dentes_Presentes || '-'}</td>
-                    <td class="col-lista" style="color: green;">${linha.Dentes_Higidos || '-'}</td>
-                    <td class="col-lista" style="color: red;">${linha.Dentes_Cariados || '-'}</td>
                 `;
-                tbody.appendChild(tr);
+
+                // --- LINHA 2: DETALHES (Escondida) ---
+                const trDetalhe = document.createElement('tr');
+                trDetalhe.id = detalheId;
+                trDetalhe.className = 'linha-detalhe';
+                
+                // O colspan="5" é importante para ocupar a largura toda das 5 colunas acima
+                trDetalhe.innerHTML = `
+                    <td colspan="5" style="padding: 0;">
+                        <div class="detalhes-content">
+                            
+                            <div class="stats-grid">
+                                <div class="stat-box" style="border-left: 4px solid #004085;">
+                                    <span class="stat-titulo">Qtd. Total</span>
+                                    <span class="stat-valor cor-azul">${linha['Nr Dentes'] || 0}</span>
+                                </div>
+                                <div class="stat-box" style="border-left: 4px solid #155724;">
+                                    <span class="stat-titulo">Qtd. Hígidos</span>
+                                    <span class="stat-valor cor-verde">${linha['Nr Higidos'] || 0}</span>
+                                </div>
+                                <div class="stat-box" style="border-left: 4px solid #721c24;">
+                                    <span class="stat-titulo">Qtd. Cariados</span>
+                                    <span class="stat-valor cor-vermelha">${linha['Nr Cariados'] || 0}</span>
+                                </div>
+                            </div>
+
+                            <div class="listas-grid">
+                                <div class="lista-item">
+                                    <span class="lista-label">🦷 Dentes Presentes:</span>
+                                    <span class="lista-dados">${linha.Dentes_Presentes || '-'}</span>
+                                </div>
+                                <div class="lista-item">
+                                    <span class="lista-label" style="color:green;">✔ Hígidos:</span>
+                                    <span class="lista-dados">${linha.Dentes_Higidos || '-'}</span>
+                                </div>
+                                <div class="lista-item">
+                                    <span class="lista-label" style="color:red;">⚠ Cariados:</span>
+                                    <span class="lista-dados">${linha.Dentes_Cariados || '-'}</span>
+                                </div>
+                            </div>
+
+                        </div>
+                    </td>
+                `;
+
+                tbody.appendChild(trResumo);
+                tbody.appendChild(trDetalhe);
             });
+        }
+
+        /**
+         * Função que alterna a visibilidade da linha de detalhes
+         */
+        function toggleDetalhe(id) {
+            const linhaDetalhe = document.getElementById(id);
+            if (linhaDetalhe.classList.contains('aberta')) {
+                linhaDetalhe.classList.remove('aberta');
+            } else {
+                // Opcional: Fecha outros abertos se quiser que só 1 fique aberto por vez
+                // document.querySelectorAll('.linha-detalhe').forEach(l => l.classList.remove('aberta'));
+                
+                linhaDetalhe.classList.add('aberta');
+            }
         }
     </script>
 </body>
