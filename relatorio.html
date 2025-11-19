@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório Completo de Pacientes</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Estilos gerais do container */
+        .container {
+            max-width: 95%;
+            margin: 20px auto;
+        }
+
+        /* --- NOVO: Estilos para a Barra de Filtros --- */
+        .filter-container {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            background-color: #f1f1f1;
+            padding: 15px;
+            border-radius: 8px;
+            flex-wrap: wrap; /* Quebra linha em telas pequenas */
+            align-items: flex-end;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .filter-group label {
+            font-size: 0.9em;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #555;
+        }
+
+        .filter-group input {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1em;
+        }
+
+        /* Estilos da Tabela (Mantidos) */
+        .table-container {
+            overflow-x: auto;
+            margin-top: 10px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85em;
+            min-width: 1200px;
+        }
+
+        th, td {
+            padding: 12px 10px;
+            border-bottom: 1px solid #eee;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        th {
+            background-color: #005a8d;
+            color: white;
+            font-weight: 600;
+            white-space: nowrap;
+            position: sticky;
+            top: 0;
+        }
+
+        tr:hover { background-color: #f8f9fa; }
+
+        .col-lista {
+            max-width: 150px;
+            word-wrap: break-word;
+            font-family: monospace;
+            color: #555;
+        }
+
+        .tag-verde { color: #155724; background-color: #d4edda; padding: 2px 5px; border-radius: 4px; font-weight: bold; }
+        .tag-vermelha { color: #721c24; background-color: #f8d7da; padding: 2px 5px; border-radius: 4px; font-weight: bold; }
+        .tag-azul { color: #004085; background-color: #cce5ff; padding: 2px 5px; border-radius: 4px; font-weight: bold; }
+
+        .btn-voltar {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: 500;
+        }
+        .btn-voltar:hover { background-color: #5a6268; }
+
+        .loading { text-align: center; padding: 40px; color: #666; font-size: 1.2em; }
+        
+        /* Contador de resultados */
+        #contador-resultados {
+            font-style: italic;
+            color: #666;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <a href="index.html" class="btn-voltar">← Voltar ao Formulário</a>
+        
+        <h1>Relatório Completo de Pacientes 📋</h1>
+        
+        <div class="filter-container">
+            <div class="filter-group">
+                <label for="filtro-examinador">Filtrar por Examinador:</label>
+                <input type="text" id="filtro-examinador" placeholder="Digite o nome...">
+            </div>
+            
+            <div class="filter-group">
+                <label for="filtro-anotador">Filtrar por Anotador:</label>
+                <input type="text" id="filtro-anotador" placeholder="Digite o nome...">
+            </div>
+
+            <div class="filter-group">
+                <label for="filtro-cariados">Mínimo de Dentes Cariados:</label>
+                <input type="number" id="filtro-cariados" placeholder="Ex: 1 (Mostra 1 ou mais)">
+            </div>
+        </div>
+        
+        <p>Mostrando <span id="contador-registros">0</span> registro(s).</p>
+
+        <div id="loading" class="loading">Carregando dados da planilha...</div>
+
+        <div class="table-container">
+            <table id="tabela-pacientes" style="display: none;">
+                <thead>
+                    <tr>
+                        <th>Data/Hora</th>
+                        <th>Paciente</th>
+                        <th>Nascimento</th>
+                        <th>Idade</th>
+                        <th>Equipe</th>
+                        
+                        <th title="Total de Dentes Presentes">Qtd. Total</th>
+                        <th title="Total de Hígidos">Qtd. Hígidos</th>
+                        <th title="Total de Cariados">Qtd. Cariados</th>
+
+                        <th>Lista: Presentes</th>
+                        <th>Lista: Hígidos</th>
+                        <th>Lista: Cariados</th>
+                    </tr>
+                </thead>
+                <tbody id="tabela-corpo">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // --- ATENÇÃO: COLE SUA URL DO SCRIPT AQUI ---
+        const API_URL = 'https://script.google.com/macros/s/AKfycbwrZcgJcZoWyuINJ-LP2V_kxLuC6h_WTWZAO2YdyHMfui46oE-lrWt1e_xbHB87g5hgBQ/exec';
+
+        // Variável global para guardar os dados originais
+        let todosOsDados = [];
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const loading = document.getElementById('loading');
+            const tabela = document.getElementById('tabela-pacientes');
+            
+            // Elementos dos filtros
+            const inputExaminador = document.getElementById('filtro-examinador');
+            const inputAnotador = document.getElementById('filtro-anotador');
+            const inputCariados = document.getElementById('filtro-cariados');
+
+            try {
+                const response = await fetch(API_URL);
+                const dados = await response.json();
+                
+                if (!dados || dados.length === 0) {
+                    loading.textContent = 'Nenhum dado encontrado.';
+                    return;
+                }
+
+                // Salva os dados na variável global e inverte a ordem (mais recentes primeiro)
+                todosOsDados = dados.reverse();
+
+                loading.style.display = 'none';
+                tabela.style.display = 'table';
+
+                // Renderiza a tabela pela primeira vez com tudo
+                renderizarTabela(todosOsDados);
+
+                // --- Adiciona os eventos de "escuta" nos filtros ---
+                // A cada letra digitada, chama a função filtrarDados
+                inputExaminador.addEventListener('input', filtrarDados);
+                inputAnotador.addEventListener('input', filtrarDados);
+                inputCariados.addEventListener('input', filtrarDados);
+
+            } catch (error) {
+                loading.textContent = 'Erro ao carregar: ' + error.message;
+                console.error(error);
+            }
+        });
+
+        /**
+         * Função que filtra os dados com base nos inputs e redesenha a tabela
+         */
+        function filtrarDados() {
+            const termoExaminador = document.getElementById('filtro-examinador').value.toLowerCase();
+            const termoAnotador = document.getElementById('filtro-anotador').value.toLowerCase();
+            const qtdCariados = document.getElementById('filtro-cariados').value;
+
+            // Filtra o array original
+            const dadosFiltrados = todosOsDados.filter(paciente => {
+                // Verifica Examinador (se contém o texto digitado)
+                // O "|| ''" previne erro se o campo estiver vazio na planilha
+                const matchExaminador = (paciente.Examinador || '').toLowerCase().includes(termoExaminador);
+                
+                // Verifica Anotador
+                const matchAnotador = (paciente.Anotador || '').toLowerCase().includes(termoAnotador);
+                
+                // Verifica Quantidade de Cariados (Lógica: Maior ou Igual)
+                // Se o filtro estiver vazio, considera verdadeiro (true)
+                let matchCariados = true;
+                if (qtdCariados !== '') {
+                    const numCariadosPaciente = parseInt(paciente['Nr Cariados']) || 0;
+                    matchCariados = numCariadosPaciente >= parseInt(qtdCariados);
+                }
+
+                return matchExaminador && matchAnotador && matchCariados;
+            });
+
+            // Redesenha a tabela com os dados filtrados
+            renderizarTabela(dadosFiltrados);
+        }
+
+        /**
+         * Função responsável apenas por desenhar as linhas da tabela
+         */
+        function renderizarTabela(listaDeDados) {
+            const tbody = document.getElementById('tabela-corpo');
+            const contador = document.getElementById('contador-registros');
+            
+            tbody.innerHTML = ''; // Limpa a tabela atual
+            contador.textContent = listaDeDados.length; // Atualiza o contador
+
+            if (listaDeDados.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; padding: 20px;">Nenhum resultado encontrado para os filtros.</td></tr>';
+                return;
+            }
+
+            listaDeDados.forEach(linha => {
+                // Formatações
+                let dataHora = new Date(linha.Timestamp).toLocaleString('pt-BR');
+                let dataNasc = linha.Data_Nascimento;
+                if (linha.Data_Nascimento && linha.Data_Nascimento.includes('T')) {
+                        dataNasc = new Date(linha.Data_Nascimento).toLocaleDateString('pt-BR');
+                }
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${dataHora}</td>
+                    <td><strong>${linha.Paciente || '---'}</strong></td>
+                    <td>${dataNasc || '---'}</td>
+                    <td>${linha.Idade || '---'}</td>
+                    <td>
+                        <strong>Ex:</strong> ${linha.Examinador || '-'}<br>
+                        <small><strong>An:</strong> ${linha.Anotador || '-'}</small>
+                    </td>
+                    
+                    <td style="text-align: center;"><span class="tag-azul">${linha['Nr Dentes'] || 0}</span></td>
+                    <td style="text-align: center;"><span class="tag-verde">${linha['Nr Higidos'] || 0}</span></td>
+                    <td style="text-align: center;"><span class="tag-vermelha">${linha['Nr Cariados'] || 0}</span></td>
+                    
+                    <td class="col-lista">${linha.Dentes_Presentes || '-'}</td>
+                    <td class="col-lista" style="color: green;">${linha.Dentes_Higidos || '-'}</td>
+                    <td class="col-lista" style="color: red;">${linha.Dentes_Cariados || '-'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+    </script>
+</body>
+</html>
