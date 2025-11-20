@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Estatístico</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        /* --- ESTILOS ESPECÍFICOS DO DASHBOARD --- */
+        body { background-color: #f4f7f6; }
+        
+        .container { max-width: 1200px; margin: 20px auto; }
+
+        /* Grid de Cartões (KPIs) */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .kpi-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            text-align: center;
+            border-bottom: 4px solid #ddd;
+        }
+
+        .kpi-titulo { font-size: 0.9em; color: #666; text-transform: uppercase; letter-spacing: 1px; }
+        .kpi-valor { font-size: 2.5em; font-weight: bold; color: #333; margin: 10px 0; }
+        .kpi-sub { font-size: 0.8em; color: #888; }
+
+        /* Cores das bordas dos cards */
+        .borda-azul { border-color: #005a8d; }
+        .borda-verde { border-color: #28a745; }
+        .borda-vermelha { border-color: #dc3545; }
+        .borda-roxa { border-color: #6f42c1; }
+
+        /* Grid dos Gráficos */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        h2 { color: #005a8d; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 15px; font-size: 1.2em; }
+
+        .btn-voltar {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        .btn-voltar:hover { background-color: #5a6268; }
+
+        .loading { text-align: center; padding: 50px; font-size: 1.2em; color: #666; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div style="margin-bottom: 20px;">
+            <a href="index.html" class="btn-voltar">← Voltar ao Formulário</a>
+            <a href="relatorio.html" class="btn-voltar" style="background-color: #005a8d;">Ver Lista de Pacientes</a>
+        </div>
+
+        <h1>Painel Estatístico Geral 📊</h1>
+        <p>Visão geral dos atendimentos realizados.</p>
+
+        <div id="loading" class="loading">Calculando estatísticas...</div>
+
+        <div id="dashboard-content" style="display: none;">
+            
+            <div class="kpi-grid">
+                <div class="kpi-card borda-azul">
+                    <div class="kpi-titulo">Total Pacientes</div>
+                    <div class="kpi-valor" id="kpi-total">0</div>
+                    <div class="kpi-sub">Atendidos</div>
+                </div>
+                <div class="kpi-card borda-roxa">
+                    <div class="kpi-titulo">Média de Dentes</div>
+                    <div class="kpi-valor" id="kpi-media-dentes">0</div>
+                    <div class="kpi-sub">Por paciente</div>
+                </div>
+                <div class="kpi-card borda-verde">
+                    <div class="kpi-titulo">Média Hígidos</div>
+                    <div class="kpi-valor" id="kpi-media-higidos" style="color: #28a745;">0</div>
+                    <div class="kpi-sub">Por paciente</div>
+                </div>
+                <div class="kpi-card borda-vermelha">
+                    <div class="kpi-titulo">Média Cariados</div>
+                    <div class="kpi-valor" id="kpi-media-cariados" style="color: #dc3545;">0</div>
+                    <div class="kpi-sub">Por paciente</div>
+                </div>
+            </div>
+
+            <div class="charts-grid">
+                
+                <div class="chart-container">
+                    <h2>Distribuição por Sexo</h2>
+                    <canvas id="chartSexo"></canvas>
+                </div>
+
+                <div class="chart-container">
+                    <h2>Necessidade de Encaminhamento</h2>
+                    <canvas id="chartEncaminhamento"></canvas>
+                </div>
+
+                <div class="chart-container">
+                    <h2>Saúde Bucal (Totais Absolutos)</h2>
+                    <canvas id="chartTotais"></canvas>
+                </div>
+
+                <div class="chart-container">
+                    <h2>Índice de Fluorose</h2>
+                    <canvas id="chartFluorose"></canvas>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- COLE SUA URL DO SCRIPT AQUI ---
+        const API_URL = 'https://script.google.com/macros/s/AKfycbxh54jhhERORrBq5JebgYa-D6dIUyT-QOk2bLROKBaa6dHdn7WYagBXhd8ZWNv5ihHPXA/exec';
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const loading = document.getElementById('loading');
+            const content = document.getElementById('dashboard-content');
+
+            try {
+                const response = await fetch(API_URL);
+                const dados = await response.json();
+                
+                if (!dados || dados.length === 0) {
+                    loading.textContent = 'Nenhum dado para gerar estatísticas.';
+                    return;
+                }
+
+                // --- 1. PROCESSAMENTO DOS DADOS ---
+                const totalPacientes = dados.length;
+                
+                let masc = 0, fem = 0;
+                let somaDentes = 0, somaHigidos = 0, somaCariados = 0;
+                let precisaEnc = 0, naoPrecisaEnc = 0;
+                
+                // Objeto para contar Fluorose (0 a 5)
+                let fluoroseCounts = { '0': 0, '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 };
+
+                dados.forEach(p => {
+                    // Sexo
+                    if (p.Sexo === 'Masculino') masc++;
+                    else if (p.Sexo === 'Feminino') fem++;
+
+                    // Somas para médias
+                    // O parseInt garante que estamos somando números, || 0 trata vazios
+                    somaDentes += parseInt(p['Nr Dentes']) || 0;
+                    somaHigidos += parseInt(p['Nr Higidos']) || 0;
+                    somaCariados += parseInt(p['Nr Cariados']) || 0;
+
+                    // Encaminhamento
+                    const enc = (p.Encaminhamento || '').toLowerCase();
+                    if (enc.includes('não há necessidade')) {
+                        naoPrecisaEnc++;
+                    } else {
+                        precisaEnc++; // Clínicas Integradas
+                    }
+
+                    // Fluorose (Pega só o primeiro número da string "1 - Questionável")
+                    const fluor = (p.Score_Fluorose || '0').charAt(0);
+                    if (fluoroseCounts[fluor] !== undefined) fluoroseCounts[fluor]++;
+                });
+
+                // --- 2. ATUALIZA CARDS (KPIs) ---
+                document.getElementById('kpi-total').textContent = totalPacientes;
+                document.getElementById('kpi-media-dentes').textContent = (somaDentes / totalPacientes).toFixed(1);
+                document.getElementById('kpi-media-higidos').textContent = (somaHigidos / totalPacientes).toFixed(1);
+                document.getElementById('kpi-media-cariados').textContent = (somaCariados / totalPacientes).toFixed(1);
+
+                // --- 3. GERA GRÁFICOS ---
+                
+                // Gráfico Sexo (Pizza)
+                new Chart(document.getElementById('chartSexo'), {
+                    type: 'pie',
+                    data: {
+                        labels: ['Feminino', 'Masculino'],
+                        datasets: [{
+                            data: [fem, masc],
+                            backgroundColor: ['#ff99c8', '#99c2ff']
+                        }]
+                    }
+                });
+
+                // Gráfico Encaminhamento (Doughnut/Rosca)
+                new Chart(document.getElementById('chartEncaminhamento'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Precisa de Atendimento', 'Alta / Sem necessidade'],
+                        datasets: [{
+                            data: [precisaEnc, naoPrecisaEnc],
+                            backgroundColor: ['#ffc107', '#28a745']
+                        }]
+                    }
+                });
+
+                // Gráfico Totais (Barras)
+                new Chart(document.getElementById('chartTotais'), {
+                    type: 'bar',
+                    data: {
+                        labels: ['Total Dentes Presentes', 'Total Hígidos', 'Total Cariados'],
+                        datasets: [{
+                            label: 'Quantidade Absoluta',
+                            data: [somaDentes, somaHigidos, somaCariados],
+                            backgroundColor: ['#6c757d', '#28a745', '#dc3545']
+                        }]
+                    },
+                    options: { plugins: { legend: { display: false } } }
+                });
+
+                // Gráfico Fluorose (Barra Horizontal)
+                new Chart(document.getElementById('chartFluorose'), {
+                    type: 'bar',
+                    data: {
+                        labels: ['0-Normal', '1-Quest.', '2-M. Leve', '3-Leve', '4-Mod.', '5-Severa'],
+                        datasets: [{
+                            label: 'Pacientes',
+                            data: [
+                                fluoroseCounts['0'], fluoroseCounts['1'], fluoroseCounts['2'],
+                                fluoroseCounts['3'], fluoroseCounts['4'], fluoroseCounts['5']
+                            ],
+                            backgroundColor: '#17a2b8'
+                        }]
+                    }
+                });
+
+                // Mostra o conteúdo
+                loading.style.display = 'none';
+                content.style.display = 'block';
+
+            } catch (error) {
+                loading.textContent = 'Erro ao carregar dados: ' + error.message;
+                console.error(error);
+            }
+        });
+    </script>
+</body>
+</html>
