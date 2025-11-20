@@ -1,296 +1,202 @@
-/* Reset Básico e Fontes */
+/* style.css - Versão Responsiva Mobile-First */
+
+/* Reset Básico */
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background-color: #f4f7f6;
+    background-color: #f0f2f5; /* Fundo um pouco mais moderno */
     color: #333;
     line-height: 1.6;
-    padding: 20px;
+    margin: 0;
+    padding: 10px; /* Menos padding no body para mobile */
 }
 
 /* Container Principal */
 .container {
     max-width: 900px;
     margin: 0 auto;
-    padding: 30px;
+    padding: 20px;
     background-color: #ffffff;
     border-radius: 12px;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.07);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
 
-h1 {
-    color: #005a8d; /* Azul dental */
-    text-align: center;
-    margin-bottom: 10px;
-}
+h1 { color: #005a8d; text-align: center; margin-bottom: 10px; font-size: 1.5rem; }
+p { text-align: center; margin-bottom: 20px; color: #666; }
 
-p {
-    text-align: center;
-    margin-bottom: 25px;
-    font-size: 1.1em;
-    color: #555;
-}
-
-/* Estilo dos Formulários e Grupos */
-form {
-    display: flex;
-    flex-direction: column;
-}
+/* Formulário */
+form { display: flex; flex-direction: column; }
 
 fieldset {
-    border: 1px solid #dcdcdc;
+    border: 1px solid #e0e0e0;
     border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 25px;
+    padding: 15px;
+    margin-bottom: 20px;
+    background-color: #fff;
 }
 
 legend {
-    font-size: 1.4em;
-    font-weight: 600;
+    font-size: 1.1em;
+    font-weight: 700;
     color: #005a8d;
-    padding: 0 10px;
-    margin-left: 10px;
+    padding: 0 5px;
 }
 
-.form-group {
-    margin-bottom: 15px;
-    display: flex;
-    flex-direction: column;
-}
+.form-group { margin-bottom: 15px; }
 
 label {
+    display: block;
     font-weight: 600;
     margin-bottom: 5px;
     color: #444;
 }
 
 input[type="text"],
-input[type="date"] {
+input[type="date"],
+input[type="number"],
+select,
+textarea {
     width: 100%;
     padding: 12px;
     border: 1px solid #ccc;
-    border-radius: 6px;
-    box-sizing: border-box; /* Importante para o padding não afetar a largura */
-    font-size: 1em;
+    border-radius: 8px; /* Bordas mais arredondadas */
+    box-sizing: border-box;
+    font-size: 16px; /* Tamanho 16px evita zoom automático no iPhone */
+    background-color: #f9f9f9;
 }
 
-input[type="text"]:focus,
-input[type="date"]:focus {
+input:focus, select:focus, textarea:focus {
     border-color: #007bff;
+    background-color: #fff;
     outline: none;
-    box-shadow: 0 0 5px rgba(0,123,255,0.25);
 }
 
-#idade-calculada {
-    font-size: 1.1em;
-    font-weight: bold;
-    color: #007bff;
-    padding: 10px 0;
+/* Botões de Navegação do Topo */
+.sheet-button {
+    display: block;
+    text-align: center;
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    border: 1px solid transparent;
+    transition: opacity 0.2s;
 }
+.sheet-button:active { transform: scale(0.98); }
 
-/* Estilo do Odontograma */
+/* ODONTOGRAMA */
 h3 {
+    font-size: 1.1em;
     color: #333;
     border-bottom: 2px solid #eee;
     padding-bottom: 5px;
-    margin-top: 10px;
-}
-
-h4 {
-    color: #555;
     margin-top: 15px;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 10px;
+    flex-wrap: wrap; /* Permite quebrar linha no mobile */
+    gap: 10px;
 }
 
-.odontograma-container p {
-    font-style: italic;
-    color: #888;
-    text-align: left;
-    margin: 10px 0;
+.button-group {
+    display: flex;
+    gap: 5px;
+    width: 100%; /* No mobile ocupa tudo */
 }
 
+.action-button {
+    flex: 1; /* Botões dividem o espaço igualmente */
+    padding: 10px;
+    font-size: 0.85em;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+}
+.fill-all-button { background-color: #6c757d; color: white; }
+.clear-all-button { background-color: #e9ecef; color: #495057; }
+
+/* Grid dos Dentes */
 .dente-grid {
     display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-bottom: 10px; /* Adicionado para separar as 4 fileiras */
+    flex-wrap: wrap; /* OBRIGATÓRIO para mobile */
+    gap: 8px;
+    justify-content: center; /* Centraliza os dentes */
+    margin-bottom: 15px;
 }
 
 .dente-item {
     display: flex;
     align-items: center;
-    background-color: #f9f9f9;
-    border: 1px solid #ddd;
+    justify-content: center;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
     border-radius: 6px;
-    padding: 8px 12px;
+    padding: 8px;
     cursor: pointer;
-    transition: background-color 0.2s, border-color 0.2s;
-}
-
-.dente-item:hover {
-    background-color: #f0f0f0;
+    /* Tamanho flexível: cresce e diminui, base 45px */
+    flex: 1 0 45px; 
+    min-width: 45px;
+    max-width: 60px; 
 }
 
 .dente-item input[type="checkbox"] {
-    margin-right: 8px;
-    cursor: pointer;
+    transform: scale(1.3); /* Checkbox maior para o dedo */
+    margin-right: 5px;
 }
 
 .dente-item label {
-    margin-bottom: 0; /* Sobrescreve o label padrão */
-    font-weight: 500;
+    margin: 0;
+    font-size: 0.9em;
     cursor: pointer;
 }
 
-/* --- NOVO: Estilo para dentes desabilitados --- */
-.dente-item input[type="checkbox"]:disabled {
-    cursor: not-allowed;
-}
+.dente-item input:checked + label { font-weight: bold; color: #005a8d; }
+.dente-item:has(input:checked) { background-color: #e7f1ff; border-color: #005a8d; }
 
-.dente-item input[type="checkbox"]:disabled + label {
-    color: #aaa;
-    cursor: not-allowed;
-    text-decoration: line-through;
-}
-
-/* Botões de Ação (Marcar/Desmarcar) */
-.section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 10px;
-    flex-wrap: wrap;
-}
-
-.button-group {
-    display: flex;
-    gap: 8px;
-}
-
-.action-button {
-    font-size: 0.8em;
-    font-weight: 500;
-    padding: 6px 12px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.2s, border-color 0.2s;
-}
-
-.fill-all-button {
-    background-color: #6c757d;
-    color: white;
-}
-.fill-all-button:hover {
-    background-color: #5a6268;
-}
-
-.clear-all-button {
-    background-color: #f8f9fa;
-    color: #6c757d;
-    border: 1px solid #6c757d;
-}
-.clear-all-button:hover {
-    background-color: #e2e6ea;
-}
-
-/* Botão de Envio */
-button[type="submit"] {
-    background-color: #007bff;
-    color: white;
-    font-size: 1.1em;
-    font-weight: 600;
-    padding: 15px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-    margin-top: 10px;
-}
-
-button[type="submit"]:hover {
-    background-color: #0056b3;
-}
-
-/* Mensagens de status */
-#loading-message, #success-message, #error-message {
-    text-align: center;
-    font-size: 1.1em;
-    font-weight: bold;
-    margin-top: 15px;
-    padding: 12px;
-    border-radius: 6px;
-}
-
-/* --- NOVO ESTILO PARA O BOTÃO DA PLANILHA --- */
-.sheet-button {
-    display: block; /* Faz o link ocupar a linha */
-    width: 100%;
-    box-sizing: border-box; /* Garante que o padding não quebre o layout */
-    padding: 12px;
-    margin-bottom: 25px; /* Espaçamento antes do formulário */
-    
-    /* Estilo do botão "outline" */
-    background-color: #f8f9fa;
-    border: 1px solid #007bff; /* Borda com o azul principal */
-    color: #007bff; /* Texto com o azul principal */
-    
-    border-radius: 6px;
-    font-size: 1em;
-    font-weight: 600;
-    text-align: center;
-    text-decoration: none; /* Remove o sublinhado do link */
-    cursor: pointer;
-    transition: background-color 0.2s, color 0.2s;
-}
-
-.sheet-button:hover {
-    background-color: #007bff; /* Fundo muda ao passar o mouse */
-    color: #ffffff; /* Texto muda para branco */
-}
-
-/* ... (MANTENHA TODO O CSS ANTERIOR) ... */
-
-/* --- NOVO: Estilos para a seleção de Faces de Cárie --- */
+/* Faces das Cáries */
 .face-card {
-    background-color: #fff;
-    border: 1px solid #e0c46c; /* Borda amarelada */
-    padding: 10px;
+    border: 1px solid #ffd700;
+    background-color: #fffbe6;
+    padding: 15px;
+    border-radius: 8px;
     margin-bottom: 10px;
-    border-radius: 6px;
-    display: flex;
-    flex-direction: column;
 }
-
-.face-card-title {
-    font-weight: bold;
-    color: #856404;
-    margin-bottom: 8px;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 5px;
-}
-
 .faces-options {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
+    margin-top: 10px;
 }
-
 .face-option {
-    display: flex;
-    align-items: center;
-    font-size: 0.9em;
+    background: white;
+    padding: 8px 12px;
+    border-radius: 20px;
+    border: 1px solid #ddd;
 }
 
-.face-option input {
-    margin-right: 5px;
+/* Botão Salvar */
+button[type="submit"] {
+    width: 100%;
+    padding: 16px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1em;
+    font-weight: bold;
+    margin-top: 20px;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0,123,255,0.2);
 }
 
-/* Estilo para Textarea */
-textarea {
-    resize: vertical; /* Permite redimensionar apenas verticalmente */
-    font-family: inherit;
+/* MEDIA QUERIES (Regras específicas para Celular) */
+@media (min-width: 768px) {
+    /* Regras para Tablet/PC */
+    .button-group { width: auto; } /* Botões ocupam só o necessário */
+    .dente-grid { justify-content: flex-start; } /* Alinha a esquerda no PC */
+    .dente-item { flex: 0 0 auto; width: auto; }
 }
-
-#loading-message { color: #005a8d; }
-#success-message { background-color: #d4edda; color: #155724; }
-#error-message { background-color: #f8d7da; color: #721c24; }

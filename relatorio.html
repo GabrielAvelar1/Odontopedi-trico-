@@ -7,161 +7,75 @@
     <link rel="stylesheet" href="style.css">
     <style>
         /* --- CONFIGURAÇÕES GERAIS --- */
-        .container {
-            max-width: 98%;
-            margin: 20px auto;
-        }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f0f2f5; margin: 0; padding: 10px; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
 
         /* --- FILTROS --- */
         .filter-container {
             display: flex;
+            flex-direction: column; /* Celular: Um embaixo do outro */
             gap: 15px;
             margin-bottom: 20px;
             background-color: #f8f9fa;
-            padding: 20px;
+            padding: 15px;
             border-radius: 8px;
-            border: 1px solid #e9ecef;
-            flex-wrap: wrap;
-            align-items: flex-end;
         }
 
-        .filter-group {
-            display: flex;
-            flex-direction: column;
-            flex: 1;
-            min-width: 200px;
+        /* No Tablet/PC, filtros lado a lado */
+        @media (min-width: 768px) {
+            .filter-container { flex-direction: row; align-items: flex-end; }
         }
 
-        .filter-group label {
-            font-size: 0.85em;
-            font-weight: bold;
-            color: #005a8d;
-            margin-bottom: 5px;
-        }
+        .filter-group { display: flex; flex-direction: column; flex: 1; }
+        .filter-group label { font-size: 0.85em; font-weight: bold; color: #005a8d; margin-bottom: 5px; }
+        .filter-group input, .filter-group select { padding: 12px; border: 1px solid #ced4da; border-radius: 6px; font-size: 16px; background: white; }
 
-        /* Estilo compartilhado para Input e Select */
-        .filter-group input, 
-        .filter-group select {
-            padding: 10px;
-            border: 1px solid #ced4da;
-            border-radius: 4px;
-            font-size: 1em;
-            background-color: white;
-        }
-
-        /* --- TABELA PRINCIPAL --- */
-        .table-container {
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            overflow-x: auto;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.9em;
-            min-width: 1000px;
-        }
-
-        th, td {
-            padding: 14px 12px;
-            border-bottom: 1px solid #eee;
-            text-align: left;
-            vertical-align: middle;
-        }
-
-        th {
-            background-color: #005a8d;
-            color: white;
-            font-weight: 600;
-            white-space: nowrap;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-
-        /* --- LINHA DE RESUMO (CLICÁVEL) --- */
-        .linha-resumo {
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-        .linha-resumo:hover { background-color: #f1f3f5; }
+        /* --- TABELA --- */
+        .table-container { overflow-x: auto; margin-top: 15px; border-radius: 8px; border: 1px solid #eee; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9em; min-width: 800px; /* Garante scroll horizontal */ }
+        th, td { padding: 15px 10px; border-bottom: 1px solid #eee; text-align: left; }
+        th { background-color: #005a8d; color: white; white-space: nowrap; }
         
+        /* Linha Resumo */
+        .linha-resumo { cursor: pointer; }
+        .linha-resumo:hover { background-color: #f1f3f5; }
         .nome-paciente { font-weight: bold; color: #333; }
-        .nome-paciente::before { content: '► '; font-size: 0.8em; color: #999; margin-right: 5px; }
-        .linha-resumo.ativa .nome-paciente::before { content: '▼ '; color: #005a8d; }
+        .status-enc { font-size: 0.75em; padding: 4px 8px; border-radius: 12px; font-weight: 600; display: inline-block; }
+        .status-nao { background-color: #d4edda; color: #155724; }
+        .status-sim { background-color: #fff3cd; color: #856404; }
 
-        /* Status do Encaminhamento (Cores) */
-        .status-enc { font-size: 0.85em; padding: 4px 8px; border-radius: 12px; font-weight: 500; display: inline-block;}
-        .status-nao { background-color: #d4edda; color: #155724; } /* Verde */
-        .status-sim { background-color: #fff3cd; color: #856404; } /* Amarelo */
-        .status-urg { background-color: #f8d7da; color: #721c24; } /* Vermelho */
-
-
-        /* --- LINHA DE DETALHES (EXPANSIVEL) --- */
+        /* --- DETALHES (Acordeão) --- */
         .linha-detalhe { display: none; background-color: #fafbfc; }
         .linha-detalhe.aberta { display: table-row; }
 
         .detalhes-wrapper {
-            padding: 20px 30px;
+            padding: 20px;
             border-left: 5px solid #005a8d;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
+            display: flex;
+            flex-direction: column; /* Celular: Coluna única */
+            gap: 20px;
         }
         
-        @media (max-width: 900px) { .detalhes-wrapper { grid-template-columns: 1fr; } }
-
-        .detalhe-secao { margin-bottom: 20px; }
-        .detalhe-titulo { 
-            font-size: 1em; 
-            font-weight: bold; 
-            color: #005a8d; 
-            border-bottom: 2px solid #e9ecef; 
-            padding-bottom: 5px; 
-            margin-bottom: 10px; 
+        /* No PC, duas colunas */
+        @media (min-width: 900px) {
+            .detalhes-wrapper { display: grid; grid-template-columns: 1fr 1fr; }
         }
 
-        .info-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 10px;
-        }
-        .info-item strong { color: #555; font-size: 0.9em; }
-        .info-item span { display: block; font-size: 1em; color: #000; }
-
-        .lista-box {
-            background: white;
-            border: 1px solid #dee2e6;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 8px;
-        }
-        .lista-nome { font-weight: bold; font-size: 0.9em; margin-bottom: 3px; display: block; }
-        .lista-valor { font-family: monospace; color: #444; word-break: break-all; }
-
-        .obs-box {
-            background-color: #fff3cd;
-            padding: 15px;
-            border-radius: 6px;
-            border: 1px solid #ffeeba;
-            font-style: italic;
-            color: #856404;
-        }
-
-        .btn-voltar {
-            display: inline-block;
-            margin-bottom: 20px;
-            padding: 10px 20px;
-            background-color: #6c757d;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-        }
-        .btn-voltar:hover { background-color: #5a6268; }
+        .detalhe-titulo { font-size: 1.1em; font-weight: bold; color: #005a8d; border-bottom: 2px solid #eee; margin-bottom: 10px; padding-bottom: 5px; }
         
-        .loading { text-align: center; padding: 50px; color: #666; font-size: 1.2em;}
+        .info-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+        @media (min-width: 600px) { .info-grid { grid-template-columns: 1fr 1fr; } } /* Tablet: 2 colunas */
+
+        .lista-box { background: white; border: 1px solid #dee2e6; padding: 10px; border-radius: 5px; margin-bottom: 8px; }
+        .lista-nome { font-weight: bold; font-size: 0.85em; display: block; margin-bottom: 2px; }
+        .lista-valor { font-family: monospace; color: #444; font-size: 0.9em; }
+
+        .obs-box { background-color: #fff3cd; padding: 15px; border-radius: 6px; font-style: italic; color: #856404; }
+
+        .btn-voltar { display: block; width: 100%; text-align: center; margin-bottom: 15px; padding: 12px; background-color: #6c757d; color: white; text-decoration: none; border-radius: 6px; box-sizing: border-box; }
+        @media (min-width: 600px) { .btn-voltar { display: inline-block; width: auto; } }
+        
+        .loading { text-align: center; padding: 40px; color: #666; }
     </style>
 </head>
 <body>
