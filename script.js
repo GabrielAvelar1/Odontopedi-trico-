@@ -225,28 +225,32 @@ function updateAllExclusivity() {
     }
 }
 
+// --- AQUI ESTÁ A MUDANÇA PRINCIPAL ---
 function atualizarSecoesDependentes() {
     const dentesPresentes = getCheckedValues('secao-possui');
     
-    // Hígidos
+    // 1. Atualiza Hígidos (Baseado nos Presentes)
     const dentesHigidosMarcados = getCheckedValues('secao-higidos');
     atualizarGridDinamico('secao-higidos', dentesPresentes, dentesHigidosMarcados, 'higidos');
 
+    // 2. Calcula os Não-Hígidos
     const dentesHigidosAtuais = getCheckedValues('secao-higidos');
     const dentesNaoHigidos = dentesPresentes.filter(dente => !dentesHigidosAtuais.includes(dente));
 
-    // Cariados
+    // 3. Atualiza Cariados (Baseado nos Não-Hígidos)
     const dentesCariadosMarcados = getCheckedValues('secao-cariados');
     atualizarGridDinamico('secao-cariados', dentesNaoHigidos, dentesCariadosMarcados, 'cariados');
 
-    // Outros
+    // 4. Atualiza Obturados, Perdidos e Extração 
+    // AGORA TODOS ELES DEPENDEM DOS "NÃO HÍGIDOS"
+    
     const dentesObturadosMarcados = getCheckedValues('secao-obturados');
     const dentesPerdidosMarcados = getCheckedValues('secao-perdidos');
     const dentesExtracaoMarcados = getCheckedValues('secao-extracao');
 
     atualizarGridDinamico('secao-obturados', dentesNaoHigidos, dentesObturadosMarcados, 'obturados');
-    atualizarGridDinamico('secao-perdidos', dentesPresentes, dentesPerdidosMarcados, 'perdidos');
-    atualizarGridDinamico('secao-extracao', dentesPresentes, dentesExtracaoMarcados, 'extracao');
+    atualizarGridDinamico('secao-perdidos', dentesNaoHigidos, dentesPerdidosMarcados, 'perdidos'); // MUDOU AQUI
+    atualizarGridDinamico('secao-extracao', dentesNaoHigidos, dentesExtracaoMarcados, 'extracao'); // MUDOU AQUI
 
     // Re-aplica listeners
     document.querySelectorAll('#secao-higidos input[type="checkbox"]').forEach(checkbox => {
@@ -330,13 +334,11 @@ function configurarBotoesGrupo(nome, seletorOuId) {
     let seletor = seletorOuId;
     if(!seletor.startsWith('.') && !seletor.startsWith('#')) seletor = '#' + seletor;
     
-    // Ajuste específico para grids (fill-deciduos, etc)
     const btnFill = document.getElementById(`fill-${nome}`);
     const btnClear = document.getElementById(`clear-${nome}`);
 
     if(btnFill) {
         btnFill.addEventListener('click', () => {
-            // Se for grid (.deciduo-grid), tem multiplos divs, mas querySelectorAll resolve
             document.querySelectorAll(`${seletor} input[type="checkbox"]`).forEach(cb => !cb.disabled && (cb.checked = true));
             if(nome.includes('deciduos') || nome.includes('permanentes')) handleDentePossuiChange();
             else atualizarSecoesDependentes();
