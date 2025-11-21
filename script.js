@@ -1,8 +1,7 @@
-// --- ATENÇÃO: PASSO CRÍTICO ---
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxh54jhhERORrBq5JebgYa-D6dIUyT-QOk2bLROKBaa6dHdn7WYagBXhd8ZWNv5ihHPXA/exec';
-// ------------------------------
+// --- ATENÇÃO: COLE SUA URL DO SCRIPT AQUI ---
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzio7uyxC0DB9F1pA7IhQOY6prBiVq09dOSBpJ3I1k9PlV6n7gV3HyOkLX78rK2Ucn2Kg/exec';
 
-// --- CONFIGURAÇÕES DOS DENTES ---
+// --- 1. CONFIGURAÇÕES DOS DENTES (LISTAS) ---
 const DECIDUOS_R1 = [55, 54, 53, 52, 51];
 const DECIDUOS_R2 = [61, 62, 63, 64, 65];
 const DECIDUOS_R3 = [85, 84, 83, 82, 81];
@@ -20,34 +19,137 @@ const DENTE_PAIRS = [
     ['84', '44'], ['74', '34'], ['85', '45'], ['75', '35']
 ];
 
+// Variável global do usuário logado
+let usuarioAtual = null;
+
 document.addEventListener('DOMContentLoaded', () => {
+    // Inicializa Odontograma
     popularSecaoPossui();
+    
+    // Listeners do Odontograma
     document.getElementById('data-nascimento').addEventListener('change', calcularIdade);
+    
+    // Botões Marcar/Desmarcar
+    configurarBotoesGrupo('deciduos', '.deciduo-grid');
+    configurarBotoesGrupo('permanentes', '.permanente-grid');
+    configurarBotoesGrupo('higidos', '#secao-higidos');
+    configurarBotoesGrupo('obturados', '#secao-obturados');
+    configurarBotoesGrupo('perdidos', '#secao-perdidos');
+    configurarBotoesGrupo('extracao', '#secao-extracao');
+
+    // Verifica Login
+    verificarLoginSalvo();
+
+    // Envio do Formulário
     document.getElementById('prontuario-form').addEventListener('submit', handleFormSubmit);
-
-    // Listeners Botões Marcar/Desmarcar - GRUPO 1 (Originais)
-    document.getElementById('fill-deciduos').addEventListener('click', handleFillDeciduos);
-    document.getElementById('fill-permanentes').addEventListener('click', handleFillPermanentes);
-    document.getElementById('fill-higidos').addEventListener('click', handleFillHigidos);
-    document.getElementById('clear-deciduos').addEventListener('click', handleClearDeciduos);
-    document.getElementById('clear-permanentes').addEventListener('click', handleClearPermanentes);
-    document.getElementById('clear-higidos').addEventListener('click', handleClearHigidos);
-
-    // Listeners Botões Marcar/Desmarcar - GRUPO 2 (Novos)
-    configurarBotoesGrupo('obturados', 'secao-obturados');
-    configurarBotoesGrupo('perdidos', 'secao-perdidos');
-    configurarBotoesGrupo('extracao', 'secao-extracao');
 });
 
-// Helper para configurar botões novos rapidamente
-function configurarBotoesGrupo(nome, secaoId) {
-    document.getElementById(`fill-${nome}`).addEventListener('click', () => {
-        document.querySelectorAll(`#${secaoId} input[type="checkbox"]`).forEach(cb => !cb.disabled && (cb.checked = true));
-    });
-    document.getElementById(`clear-${nome}`).addEventListener('click', () => {
-        document.querySelectorAll(`#${secaoId} input[type="checkbox"]`).forEach(cb => cb.checked = false);
-    });
+// --- 2. SISTEMA DE LOGIN E PERFIL ---
+
+function verificarLoginSalvo() {
+    const dadosSalvos = localStorage.getItem('odonto_user');
+    if (dadosSalvos) {
+        usuarioAtual = JSON.parse(dadosSalvos);
+        atualizarInterfaceLogada();
+    } else {
+        atualizarInterfaceDeslogada();
+    }
 }
+
+function atualizarInterfaceLogada() {
+    document.getElementById('user-login-btn').style.display = 'none';
+    document.getElementById('user-info-display').style.display = 'block';
+    document.getElementById('display-nome-anotador').textContent = usuarioAtual.nome;
+    document.getElementById('anotador').value = usuarioAtual.nome;
+    
+    const examinadorPadrao = localStorage.getItem('odonto_examinador_padrao');
+    if (examinadorPadrao) {
+        document.getElementById('examinador').value = examinadorPadrao;
+    }
+
+    document.getElementById('submit-button').style.display = 'block';
+    document.getElementById('bloqueio-envio').style.display = 'none';
+}
+
+function atualizarInterfaceDeslogada() {
+    document.getElementById('user-login-btn').style.display = 'block';
+    document.getElementById('user-info-display').style.display = 'none';
+    document.getElementById('anotador').value = '';
+    document.getElementById('submit-button').style.display = 'none';
+    document.getElementById('bloqueio-envio').style.display = 'block';
+}
+
+function abrirModalLogin() {
+    document.getElementById('modal-login').style.display = 'flex';
+    document.getElementById('msg-erro-login').style.display = 'none';
+    document.getElementById('input-matricula').value = '';
+    document.getElementById('input-matricula').focus();
+}
+
+async function validarLogin() {
+    const matricula = document.getElementById('input-matricula').value;
+    const btnEntrar = document.querySelector('#modal-login .btn-primario');
+    const msgErro = document.getElementById('msg-erro-login');
+
+    if (!matricula) return;
+
+    btnEntrar.disabled = true;
+    btnEntrar.textContent = 'Verificando...';
+    msgErro.style.display = 'none';
+
+    try {
+        // Login via GET
+        const urlLogin = `${GOOGLE_SCRIPT_URL}?action=login&matricula=${encodeURIComponent(matricula)}`;
+        
+        const req = await fetch(urlLogin);
+        const resp = await req.json();
+        
+        if (resp.result === 'success') {
+            usuarioAtual = { matricula: matricula, nome: resp.nome };
+            localStorage.setItem('odonto_user', JSON.stringify(usuarioAtual));
+            atualizarInterfaceLogada();
+            fecharModal('modal-login');
+        } else {
+            msgErro.textContent = 'Matrícula não encontrada.';
+            msgErro.style.display = 'block';
+        }
+
+    } catch (e) {
+        console.error(e);
+        msgErro.textContent = 'Erro de conexão.';
+        msgErro.style.display = 'block';
+    } finally {
+        btnEntrar.disabled = false;
+        btnEntrar.textContent = 'Entrar';
+    }
+}
+
+function fazerLogout() {
+    localStorage.removeItem('odonto_user');
+    usuarioAtual = null;
+    atualizarInterfaceDeslogada();
+    location.reload();
+}
+
+function abrirPerfil() {
+    if (!usuarioAtual) return;
+    document.getElementById('modal-perfil').style.display = 'flex';
+    document.getElementById('perfil-nome').value = usuarioAtual.nome;
+    document.getElementById('perfil-examinador').value = localStorage.getItem('odonto_examinador_padrao') || '';
+}
+
+function salvarPerfil() {
+    const examinador = document.getElementById('perfil-examinador').value;
+    localStorage.setItem('odonto_examinador_padrao', examinador);
+    document.getElementById('examinador').value = examinador;
+    fecharModal('modal-perfil');
+}
+
+function fecharModal(id) {
+    document.getElementById(id).style.display = 'none';
+}
+
+// --- 3. LÓGICA DO ODONTOGRAMA ---
 
 function popularSecaoPossui() {
     const grids = {
@@ -58,7 +160,9 @@ function popularSecaoPossui() {
     };
     for (const [gridId, dentes] of Object.entries(grids)) {
         const grid = document.getElementById(gridId);
-        dentes.forEach(d => grid.appendChild(criarCheckboxDente(d, 'possui')));
+        if(grid) {
+            dentes.forEach(d => grid.appendChild(criarCheckboxDente(d, 'possui')));
+        }
     }
     document.querySelectorAll('#secao-possui input[type="checkbox"]').forEach(checkbox => {
         checkbox.addEventListener('change', handleDentePossuiChange);
@@ -124,21 +228,18 @@ function updateAllExclusivity() {
 function atualizarSecoesDependentes() {
     const dentesPresentes = getCheckedValues('secao-possui');
     
-    // 1. Atualiza Hígidos
+    // Hígidos
     const dentesHigidosMarcados = getCheckedValues('secao-higidos');
     atualizarGridDinamico('secao-higidos', dentesPresentes, dentesHigidosMarcados, 'higidos');
 
     const dentesHigidosAtuais = getCheckedValues('secao-higidos');
-    // Dentes que NÃO são hígidos podem ser cariados, obturados, perdidos, etc.
     const dentesNaoHigidos = dentesPresentes.filter(dente => !dentesHigidosAtuais.includes(dente));
 
-    // 2. Atualiza Cariados
+    // Cariados
     const dentesCariadosMarcados = getCheckedValues('secao-cariados');
     atualizarGridDinamico('secao-cariados', dentesNaoHigidos, dentesCariadosMarcados, 'cariados');
 
-    // 3. Atualiza Obturados, Perdidos e Extração (Baseado nos Presentes)
-    // Nota: Dentes obturados geralmente não são hígidos, mas vamos permitir selecionar qualquer um presente por flexibilidade
-    // ou restringir aos "não hígidos". Vamos restringir aos não hígidos para consistência.
+    // Outros
     const dentesObturadosMarcados = getCheckedValues('secao-obturados');
     const dentesPerdidosMarcados = getCheckedValues('secao-perdidos');
     const dentesExtracaoMarcados = getCheckedValues('secao-extracao');
@@ -147,23 +248,21 @@ function atualizarSecoesDependentes() {
     atualizarGridDinamico('secao-perdidos', dentesPresentes, dentesPerdidosMarcados, 'perdidos');
     atualizarGridDinamico('secao-extracao', dentesPresentes, dentesExtracaoMarcados, 'extracao');
 
-    // Listeners para re-filtrar quando marcar "Hígido"
+    // Re-aplica listeners
     document.querySelectorAll('#secao-higidos input[type="checkbox"]').forEach(checkbox => {
         checkbox.removeEventListener('change', atualizarSecoesDependentes); 
         checkbox.addEventListener('change', atualizarSecoesDependentes);
     });
 
-    // Listeners ESPECIAIS para "Cariados" -> Mostrar Faces
+    // Faces Cáries
     document.querySelectorAll('#secao-cariados input[type="checkbox"]').forEach(checkbox => {
         checkbox.removeEventListener('change', atualizarFacesCarie);
         checkbox.addEventListener('change', atualizarFacesCarie);
     });
     
-    // Chama a atualização de faces imediatamente para desenhar se já houver marcados
     atualizarFacesCarie();
 }
 
-// --- NOVO: Lógica para Faces das Cáries ---
 function atualizarFacesCarie() {
     const container = document.getElementById('container-faces-carie');
     const lista = document.getElementById('lista-faces-dinamica');
@@ -176,24 +275,17 @@ function atualizarFacesCarie() {
     }
 
     container.style.display = 'block';
-
-    // Verifica quais cards já existem para não apagar o que o usuário já marcou
     const cardsExistentes = Array.from(lista.children).map(div => div.dataset.dente);
 
-    // 1. Remove cards de dentes que não estão mais cariados
     Array.from(lista.children).forEach(div => {
-        if (!dentesCariados.includes(div.dataset.dente)) {
-            div.remove();
-        }
+        if (!dentesCariados.includes(div.dataset.dente)) div.remove();
     });
 
-    // 2. Cria cards para novos dentes cariados
     dentesCariados.sort((a,b) => a-b).forEach(dente => {
         if (!cardsExistentes.includes(dente)) {
             const card = document.createElement('div');
             card.className = 'face-card';
-            card.dataset.dente = dente; // Identificador
-            
+            card.dataset.dente = dente; 
             card.innerHTML = `
                 <div class="face-card-title">Dente ${dente} - Faces:</div>
                 <div class="faces-options">
@@ -202,8 +294,7 @@ function atualizarFacesCarie() {
                     <label class="face-option"><input type="checkbox" value="Mesial" name="face-${dente}"> Mesial</label>
                     <label class="face-option"><input type="checkbox" value="Palatina" name="face-${dente}"> Ling/Pal</label>
                     <label class="face-option"><input type="checkbox" value="Vestibular" name="face-${dente}"> Vestib</label>
-                </div>
-            `;
+                </div>`;
             lista.appendChild(card);
         }
     });
@@ -213,7 +304,7 @@ function atualizarGridDinamico(containerId, dentesParaMostrar, dentesJaMarcados,
     const container = document.getElementById(containerId);
     container.innerHTML = '';
     if (dentesParaMostrar.length === 0) {
-        container.innerHTML = `<p>Nenhum dente disponível para seleção.</p>`;
+        container.innerHTML = `<p style="text-align:center; color:#888;">Nenhum dente disponível.</p>`;
         return;
     }
     const grid = document.createElement('div');
@@ -233,17 +324,43 @@ function getCheckedValues(containerId) {
     return Array.from(checkboxes).map(cb => cb.value);
 }
 
-// Funções de Botões (Originais)
-function handleFillDeciduos() { document.querySelectorAll('.deciduo-grid input[type="checkbox"]').forEach(cb => !cb.disabled && (cb.checked = true)); handleDentePossuiChange(); }
-function handleFillPermanentes() { document.querySelectorAll('.permanente-grid input[type="checkbox"]').forEach(cb => !cb.disabled && (cb.checked = true)); handleDentePossuiChange(); }
-function handleFillHigidos() { document.querySelectorAll('#secao-higidos input[type="checkbox"]').forEach(cb => !cb.disabled && (cb.checked = true)); atualizarSecoesDependentes(); }
-function handleClearDeciduos() { document.querySelectorAll('.deciduo-grid input[type="checkbox"]').forEach(cb => cb.checked = false); handleDentePossuiChange(); }
-function handleClearPermanentes() { document.querySelectorAll('.permanente-grid input[type="checkbox"]').forEach(cb => cb.checked = false); handleDentePossuiChange(); }
-function handleClearHigidos() { document.querySelectorAll('#secao-higidos input[type="checkbox"]').forEach(cb => cb.checked = false); atualizarSecoesDependentes(); }
+// Helper para botões Marcar/Desmarcar
+function configurarBotoesGrupo(nome, seletorOuId) {
+    // Se for classe (começa com .) ou ID (começa com #)
+    let seletor = seletorOuId;
+    if(!seletor.startsWith('.') && !seletor.startsWith('#')) seletor = '#' + seletor;
+    
+    // Ajuste específico para grids (fill-deciduos, etc)
+    const btnFill = document.getElementById(`fill-${nome}`);
+    const btnClear = document.getElementById(`clear-${nome}`);
 
-// --- ENVIO DO FORMULÁRIO ---
+    if(btnFill) {
+        btnFill.addEventListener('click', () => {
+            // Se for grid (.deciduo-grid), tem multiplos divs, mas querySelectorAll resolve
+            document.querySelectorAll(`${seletor} input[type="checkbox"]`).forEach(cb => !cb.disabled && (cb.checked = true));
+            if(nome.includes('deciduos') || nome.includes('permanentes')) handleDentePossuiChange();
+            else atualizarSecoesDependentes();
+        });
+    }
+    if(btnClear) {
+        btnClear.addEventListener('click', () => {
+            document.querySelectorAll(`${seletor} input[type="checkbox"]`).forEach(cb => cb.checked = false);
+            if(nome.includes('deciduos') || nome.includes('permanentes')) handleDentePossuiChange();
+            else atualizarSecoesDependentes();
+        });
+    }
+}
+
+
+// --- 4. ENVIO DO FORMULÁRIO ---
 async function handleFormSubmit(event) {
     event.preventDefault();
+
+    if (!usuarioAtual || !usuarioAtual.matricula) {
+        alert("Erro: Você precisa estar logado.");
+        return;
+    }
+
     const form = event.target;
     const submitButton = document.getElementById('submit-button');
     const loadingMsg = document.getElementById('loading-message');
@@ -259,7 +376,9 @@ async function handleFormSubmit(event) {
         const formData = new FormData(form);
         const data = {};
         
-        // Campos Básicos
+        data.matricula = usuarioAtual.matricula;
+
+        // Campos
         data.examinador = formData.get('examinador');
         data.anotador = formData.get('anotador');
         data.paciente = formData.get('paciente');
@@ -273,7 +392,7 @@ async function handleFormSubmit(event) {
         data.observacoes = formData.get('observacoes');
         data.encaminhamento = formData.get('encaminhamento');
 
-        // Listas de Dentes
+        // Listas
         data.dentesPresentes = getCheckedValues('secao-possui').join(', ');
         data.dentesHigidos = getCheckedValues('secao-higidos').join(', ');
         data.dentesCariados = getCheckedValues('secao-cariados').join(', ');
@@ -281,40 +400,43 @@ async function handleFormSubmit(event) {
         data.dentesPerdidos = getCheckedValues('secao-perdidos').join(', ');
         data.dentesExtracao = getCheckedValues('secao-extracao').join(', ');
 
-        // Processa as Faces das Cáries
-        // Cria uma string tipo: "16(O,M); 21(V)"
+        // Faces
         const listaFaces = [];
-        const cardsFaces = document.querySelectorAll('.face-card');
-        cardsFaces.forEach(card => {
+        document.querySelectorAll('.face-card').forEach(card => {
             const dente = card.dataset.dente;
             const inputs = card.querySelectorAll('input:checked');
-            const facesSelecionadas = Array.from(inputs).map(i => i.value);
-            
-            if (facesSelecionadas.length > 0) {
-                listaFaces.push(`${dente}(${facesSelecionadas.join(',')})`);
-            } else {
-                listaFaces.push(`${dente}(Não esp.)`); // Se não especificar
-            }
+            const faces = Array.from(inputs).map(i => i.value);
+            listaFaces.push(faces.length > 0 ? `${dente}(${faces.join(',')})` : `${dente}(Não esp.)`);
         });
         data.facesCariadas = listaFaces.join('; ');
         
+        // Envia
         const response = await fetch(GOOGLE_SCRIPT_URL, {
             method: 'POST',
-            mode: 'no-cors',
-            cache: 'no-cache',
-            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data),
         });
 
-        successMsg.style.display = 'block';
-        form.reset(); 
-        document.getElementById('idade-calculada').textContent = 'Preencha a data de nascimento';
-        document.getElementById('lista-faces-dinamica').innerHTML = ''; // Limpa faces
-        document.getElementById('container-faces-carie').style.display = 'none';
-        handleDentePossuiChange(); 
+        const respData = await response.json();
+        
+        if (respData.result === 'success') {
+            successMsg.style.display = 'block';
+            form.reset();
+            // Restaura estado logado
+            document.getElementById('anotador').value = usuarioAtual.nome;
+            const examPadrao = localStorage.getItem('odonto_examinador_padrao');
+            if (examPadrao) document.getElementById('examinador').value = examPadrao;
+            
+            // Limpa visual
+            handleDentePossuiChange();
+            document.getElementById('lista-faces-dinamica').innerHTML = '';
+            document.getElementById('container-faces-carie').style.display = 'none';
+        } else {
+            throw new Error(respData.message);
+        }
 
     } catch (error) {
         console.error('Erro ao enviar:', error);
+        errorMsg.textContent = "Erro: " + error.message;
         errorMsg.style.display = 'block';
     } finally {
         submitButton.disabled = false;

@@ -8,20 +8,25 @@
 </head>
 <body>
 
+    <div id="user-bar" class="user-bar">
+        <div class="user-info" id="user-info-display" style="display: none;">
+            <span>Olá, <strong id="display-nome-anotador">Estudante</strong> | </span>
+            <a href="#" onclick="abrirPerfil()">Meu Perfil</a> | 
+            <a href="#" onclick="fazerLogout()">Sair</a>
+        </div>
+        <div class="user-login" id="user-login-btn">
+            <span>Você não está identificado.</span>
+            <button onclick="abrirModalLogin()" class="btn-small">Fazer Login</button>
+        </div>
+    </div>
+
     <div class="container">
         <h1>Prontuário Odontopediátrico 🦷</h1>
-        <p>Formulário para coleta de dados de pacientes.</p>
-
-        <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-           
-            <a href="relatorio.html" class="sheet-button" style="flex: 1; background-color: #6c757d; border-color: #6c757d; color: white;">
-                Ver Lista de Pacientes
-            </a>
-
-            <a href="dashboard.html" class="sheet-button" style="flex: 1; background-color: #17a2b8; border-color: #17a2b8; color: white;">
-                Painel Estatístico 📊
-            </a>
-            
+        
+        <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+            <a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vQhltae5T3oMp-O4V0xqDAD7MHuGD96W3o0-1uKi4xLdm0lHg9k0y4vypvH0MqOAVugIQ9JTxPyrGbn/pubhtml?gid=720295404&single=true" target="_blank" class="sheet-button" style="flex: 1; background-color: #198754; border-color: #198754; color: white;">Planilha</a>
+            <a href="relatorio.html" class="sheet-button" style="flex: 1; background-color: #6c757d; border-color: #6c757d; color: white;">Lista</a>
+            <a href="dashboard.html" class="sheet-button" style="flex: 1; background-color: #17a2b8; border-color: #17a2b8; color: white;">Estatísticas</a>
         </div>
 
         <form id="prontuario-form">
@@ -29,12 +34,12 @@
             <fieldset>
                 <legend>Identificação da Equipe</legend>
                 <div class="form-group">
-                    <label for="examinador">Nome do Examinador:</label>
-                    <input type="text" id="examinador" name="examinador" required>
+                    <label for="anotador">Nome do Anotador (Você):</label>
+                    <input type="text" id="anotador" name="anotador" readonly style="background-color: #e9ecef; cursor: not-allowed;">
                 </div>
                 <div class="form-group">
-                    <label for="anotador">Nome do Anotador:</label>
-                    <input type="text" id="anotador" name="anotador" required>
+                    <label for="examinador">Nome do Examinador:</label>
+                    <input type="text" id="examinador" name="examinador" required>
                 </div>
             </fieldset>
 
@@ -58,7 +63,7 @@
                 </div>
                 <div class="form-group">
                     <label>Idade do Paciente:</label>
-                    <span id="idade-calculada">Preencha a data de nascimento</span>
+                    <span id="idade-calculada" style="font-weight:bold; color: #005a8d;">Preencha a data de nascimento</span>
                 </div>
                 <div class="form-group">
                     <label for="sala">Sala de Aula:</label>
@@ -153,7 +158,6 @@
                             <button type="button" id="clear-obturados" class="action-button clear-all-button">Desmarcar Todos</button>
                         </div>
                     </div>
-                    <p>Dentes marcados aqui não podem ser hígidos.</p>
                 </div>
 
                 <h3>Quais dentes estão perdidos?</h3>
@@ -206,12 +210,49 @@
 
             </fieldset>
             
+            <div id="bloqueio-envio" style="background: #f8d7da; color: #721c24; padding: 15px; border-radius: 6px; text-align: center; display: none; margin-top: 20px;">
+                <strong>🔒 Login Necessário</strong><br>
+                Você precisa informar sua matrícula para enviar o formulário.
+            </div>
+
             <button type="submit" id="submit-button">Salvar Prontuário</button>
             <div id="loading-message" style="display: none;">Enviando dados...</div>
             <div id="success-message" style="display: none;">Dados salvos com sucesso!</div>
             <div id="error-message" style="display: none;">Ocorreu um erro. Tente novamente.</div>
 
         </form>
+    </div>
+
+    <div id="modal-login" class="modal-overlay" style="display: none;">
+        <div class="modal-box">
+            <h2>Identificação 🎓</h2>
+            <p>Digite sua matrícula para acessar o sistema.</p>
+            <input type="number" id="input-matricula" placeholder="Ex: 123456" style="margin-bottom: 10px; width: 100%; padding: 10px; box-sizing: border-box;">
+            <p id="msg-erro-login" style="color: red; font-size: 0.9em; display: none; margin-bottom: 10px;"></p>
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button onclick="fecharModal('modal-login')" class="btn-secundario">Cancelar</button>
+                <button onclick="validarLogin()" class="btn-primario">Entrar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-perfil" class="modal-overlay" style="display: none;">
+        <div class="modal-box">
+            <h2>Meu Perfil 👤</h2>
+            <p>Configure suas preferências.</p>
+            
+            <label style="display: block; margin-bottom: 5px;">Seu Nome (via Matrícula):</label>
+            <input type="text" id="perfil-nome" readonly style="background: #eee; margin-bottom: 15px; width: 100%;">
+            
+            <label style="display: block; margin-bottom: 5px;">Examinador Padrão:</label>
+            <input type="text" id="perfil-examinador" placeholder="Ex: Prof. Silva" style="width: 100%;">
+            <small style="color: #666; display: block; margin-bottom: 15px;">Este nome aparecerá automaticamente no formulário.</small>
+
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button onclick="fecharModal('modal-perfil')" class="btn-secundario">Cancelar</button>
+                <button onclick="salvarPerfil()" class="btn-primario">Salvar Preferências</button>
+            </div>
+        </div>
     </div>
 
     <script src="script.js"></script>
